@@ -38,7 +38,7 @@
 // AP 模式配置 (用于 Web 界面)
 #define AP_SSID "ESP32-Sniffer"
 #define AP_PASSWORD "12345678"
-#define AP_CHANNEL 1
+#define AP_CHANNEL 11
 #define AP_MAX_CONNECTIONS 4
 
 // STA 模式配置 (可选，用于上传数据)

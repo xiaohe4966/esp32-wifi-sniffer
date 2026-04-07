@@ -47,8 +47,8 @@ WiFiSniffer::~WiFiSniffer() {
 bool WiFiSniffer::begin() {
     LOG_INFO("Initializing WiFi sniffer...");
     
-    // 设置 WiFi 为 STA 模式
-    WiFi.mode(WIFI_MODE_STA);
+    // 注意：不修改 WiFi 模式，由 main.cpp 统一管理
+    // setupWiFi() 已设置 WIFI_MODE_APSTA
     
     // 初始化 promiscuous mode
     esp_err_t err = esp_wifi_set_promiscuous(true);
