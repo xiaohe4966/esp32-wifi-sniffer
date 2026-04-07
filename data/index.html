@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 WiFi Sniffer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 ESP32 WiFi Sniffer</h1>
+            <div class="status-bar">
+                <span id="connection-status" class="status disconnected">Disconnected</span>
+                <span id="mode-badge" class="badge">IDLE</span>
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+            <button class="tab-btn" data-tab="networks">Networks</button>
+            <button class="tab-btn" data-tab="capture">Capture</button>
+            <button class="tab-btn" data-tab="attack">Attack</button>
+            <button class="tab-btn" data-tab="logs">Logs</button>
+        </nav>
+
+        <main>
+            <!-- Dashboard Tab -->
+            <section id="dashboard" class="tab-content active">
+                <div class="card-grid">
+                    <div class="card">
+                        <h3>📊 Statistics</h3>
+                        <div class="stat-row">
+                            <span class="stat-label">Total Packets:</span>
+                            <span id="stat-packets" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Networks Found:</span>
+                            <span id="stat-networks" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Current Channel:</span>
+                            <span id="stat-channel" class="stat-value">1</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">RSSI:</span>
+                            <span id="stat-rssi" class="stat-value">-</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>📡 WiFi Info</h3>
+                        <div class="stat-row">
+                            <span class="stat-label">AP IP:</span>
+                            <span id="wifi-ip" class="stat-value">192.168.4.1</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Connected Clients:</span>
+                            <span id="wifi-clients" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Uptime:</span>
+                            <span id="stat-uptime" class="stat-value">00:00:00</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>🎯 Quick Actions</h3>
+                        <div class="button-group">
+                            <button id="btn-scan" class="btn btn-primary">Start Scan</button>
+                            <button id="btn-sniff" class="btn btn-secondary">Start Sniff</button>
+                            <button id="btn-reset" class="btn btn-danger">Reset</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>📈 Packet Rate</h3>
+                    <canvas id="packet-chart" width="800" height="200"></canvas>
+                </div>
+            </section>
+
+            <!-- Networks Tab -->
+            <section id="networks" class="tab-content">
+                <div class="toolbar">
+                    <button id="btn-refresh-networks" class="btn btn-primary">🔄 Refresh</button>
+                    <input type="text" id="network-filter" placeholder="Filter networks...">
+                </div>
+                <div class="table-container">
+                    <table id="networks-table">
+                        <thead>
+                            <tr>
+                                <th>SSID</th>
+                                <th>BSSID</th>
+                                <th>Channel</th>
+                                <th>RSSI</th>
+                                <th>Security</th>
+                                <th>Packets</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="networks-tbody">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Capture Tab -->
+            <section id="capture" class="tab-content">
+                <div class="card-grid">
+                    <div class="card">
+                        <h3>📦 Capture Control</h3>
+                        <div class="form-group">
+                            <label>Channel:</label>
+                            <select id="capture-channel">
+                                <option value="0">All (Hop)</option>
+                                ${Array.from({length: 14}, (_, i) => `<option value="${i+1}">${i+1}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Target BSSID:</label>
+                            <input type="text" id="capture-bssid" placeholder="AA:BB:CC:DD:EE:FF">
+                        </div>
+                        <div class="button-group">
+                            <button id="btn-capture-start" class="btn btn-success">▶️ Start</button>
+                            <button id="btn-capture-stop" class="btn btn-danger">⏹️ Stop</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>🤝 Handshake Capture</h3>
+                        <div id="handshake-status" class="handshake-indicator">
+                            <div class="msg-indicator" id="msg1">M1</div>
+                            <div class="msg-indicator" id="msg2">M2</div>
+                            <div class="msg-indicator" id="msg3">M3</div>
+                            <div class="msg-indicator" id="msg4">M4</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="handshake-progress" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <p id="handshake-text">No handshake captured</p>
+                        <button id="btn-download-handshake" class="btn btn-primary" disabled>⬇️ Download</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>💾 Files</h3>
+                    <div id="file-list" class="file-list">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Attack Tab -->
+            <section id="attack" class="tab-content">
+                <div class="warning-box">
+                    ⚠️ <strong>Warning:</strong> These features are for authorized security testing only!
+                </div>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <h3>💥 Deauth Attack</h3>
+                        <div class="form-group">
+                            <label>Target BSSID:</label>
+                            <input type="text" id="deauth-bssid" placeholder="AA:BB:CC:DD:EE:FF">
+                        </div>
+                        <div class="form-group">
+                            <label>Target Station (optional):</label>
+                            <input type="text" id="deauth-station" placeholder="AA:BB:CC:DD:EE:FF">
+                        </div>
+                        <div class="form-group">
+                            <label>Reason Code:</label>
+                            <select id="deauth-reason">
+                                <option value="7">Class 3 frame from nonassociated STA (7)</option>
+                                <option value="6">Class 2 frame from nonauthenticated STA (6)</option>
+                                <option value="1">Unspecified (1)</option>
+                                <option value="2">Previous auth no longer valid (2)</option>
+                                <option value="3">Deauth leaving (3)</option>
+                                <option value="4">Disassoc due to inactivity (4)</option>
+                                <option value="5">Disassoc AP busy (5)</option>
+                            </select>
+                        </div>
+                        <div class="button-group">
+                            <button id="btn-deauth-start" class="btn btn-danger">⚠️ Start Deauth</button>
+                            <button id="btn-deauth-stop" class="btn btn-secondary">Stop</button>
+                        </div>
+                        <div id="deauth-stats" class="stats-text"></div>
+                    </div>
+
+                    <div class="card">
+                        <h3>🔓 Dictionary Attack</h3>
+                        <div class="form-group">
+                            <label>Handshake File:</label>
+                            <select id="dict-handshake">
+                                <option value="">Select handshake...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Dictionary:</label>
+                            <select id="dict-file">
+                                <option value="">Select dictionary...</option>
+                                <option value="/sdcard/wordlist.txt">wordlist.txt</option>
+                            </select>
+                        </div>
+                        <div class="button-group">
+                            <button id="btn-dict-start" class="btn btn-primary">▶️ Start Attack</button>
+                            <button id="btn-dict-stop" class="btn btn-secondary">Stop</button>
+                        </div>
+                        <div id="dict-progress" class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <div id="dict-stats" class="stats-text"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Logs Tab -->
+            <section id="logs" class="tab-content">
+                <div class="toolbar">
+                    <button id="btn-clear-logs" class="btn btn-secondary">Clear</button>
+                    <button id="btn-export-logs" class="btn btn-primary">Export</button>
+                    <select id="log-level">
+                        <option value="all">All Levels</option>
+                        <option value="error">Error</option>
+                        <option value="warn">Warning</option>
+                        <option value="info">Info</option>
+                        <option value="debug">Debug</option>
+                    </select>
+                </div>
+                <div id="log-container" class="log-container">
+                    <!-- Dynamic content -->
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>ESP32 WiFi Sniffer v1.0.0 | For security research only</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+.pio/
+.vscode/
+.idea/
+*.pyc
+__pycache__/
+*.log
+*.bin
+*.elf
+*.map
+*.d
+*.o
+*.a
+*.txt
