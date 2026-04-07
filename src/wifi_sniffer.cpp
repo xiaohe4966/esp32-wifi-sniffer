@@ -28,6 +28,7 @@ WiFiSniffer::WiFiSniffer()
     , networkCount(0)
     , packetCallback(nullptr)
     , networkCallback(nullptr)
+    , networkFoundCallback(nullptr)
     , filterFrameTypes(0xFF)
     , bssidFilterEnabled(false)
     , channelFilter(0)
@@ -165,6 +166,11 @@ void WiFiSniffer::setPacketCallback(PacketCallback callback) {
     packetCallback = callback;
 }
 
+void WiFiSniffer::setNetworkCallback(NetworkFoundCallback callback) {
+    networkCallback = callback;
+    networkFoundCallback = callback;  // 同时设置，兼容两种注册方式
+}
+
 void WiFiSniffer::setNetworkFoundCallback(NetworkFoundCallback callback) {
     networkCallback = callback;
 }
@@ -252,7 +258,8 @@ void WiFiSniffer::clearFilters() {
 
 // ==================== 回调处理 (ISR) ====================
 void IRAM_ATTR WiFiSniffer::wifiSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
-    if (!instance || !instance->running) return;
+    // 扫描模式和抓包模式都需要处理数据包
+    if (!instance || (!instance->running && !instance->scanning)) return;
     
     wifi_promiscuous_pkt_t* pkt = (wifi_promiscuous_pkt_t*)buf;
     
@@ -363,9 +370,10 @@ void WiFiSniffer::updateNetworkList(const PacketInfo* info, const uint8_t* packe
         net->authMode = detectAuthMode(packet, len);
     }
     
-    // 通知新网络
-    if (index == networkCount - 1 && networkCallback) {
-        networkCallback(net);
+    // 通知新网络（两个回调都触发，兼容不同注册方式）
+    if (index == networkCount - 1) {
+        if (networkCallback) networkCallback(net);
+        if (networkFoundCallback) networkFoundCallback(net);
     }
 }
 

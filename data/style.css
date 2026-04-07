@@ -62,18 +62,21 @@ header h1 {
 }
 
 .lang-btn {
-    padding: 4px 12px;
+    padding: 5px 14px;
     border-radius: 6px;
-    border: 1px solid rgba(255,255,255,0.3);
-    background: rgba(255,255,255,0.1);
-    color: #aaa;
-    font-size: 0.75rem;
+    border: 1px solid rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.12);
+    color: #e0e0e0;
+    font-size: 0.78rem;
     cursor: pointer;
     transition: all 0.2s;
+    letter-spacing: 0.5px;
+    font-weight: 500;
 }
 .lang-btn:hover {
-    background: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.25);
     color: #fff;
+    border-color: rgba(255,255,255,0.6);
 }
 
 .status {
@@ -471,6 +474,11 @@ footer {
     
     header h1 {
         font-size: 1.5rem;
+    }
+
+    .lang-btn {
+        padding: 4px 10px;
+        font-size: 0.72rem;
     }
     
     .card-grid {

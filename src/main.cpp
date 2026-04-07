@@ -250,7 +250,7 @@ void networkHandler(const WiFiNetwork* network) {
     
     // 广播到 WebSocket
 #if ENABLE_WEBSOCKET
-    WebServer.onWiFiScanComplete();
+    WebServer.broadcastScanResult(network);
 #endif
 }
 

@@ -42,6 +42,7 @@ public:
 
     // 回调设置
     void setPacketCallback(PacketCallback callback);
+    void setNetworkCallback(NetworkFoundCallback callback);
     void setNetworkFoundCallback(NetworkFoundCallback callback);
 
     // 网络扫描
@@ -96,6 +97,7 @@ private:
     // 回调函数
     PacketCallback packetCallback;
     NetworkFoundCallback networkCallback;
+    NetworkFoundCallback networkFoundCallback;
 
     // 过滤器
     uint8_t filterFrameTypes;
