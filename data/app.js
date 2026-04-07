@@ -585,16 +585,25 @@ async function apiCall(endpoint, method = 'GET', data = null) {
 
 // ==================== 操作函数 ====================
 async function startScan() {
+    addLog('info', 'Starting scan...');
     const result = await apiCall('scan');
     if (result.success) {
         state.networks = [];
+        addLog('success', 'Scan started successfully');
+    } else {
+        addLog('error', 'Failed to start scan: ' + (result.error || 'Unknown error'));
     }
 }
 
 async function startSniff() {
     const channel = document.getElementById('capture-channel')?.value || 0;
+    addLog('info', `Starting capture on channel ${channel}...`);
     const result = await apiCall(`capture/start?channel=${channel}`, 'POST');
-    if (result.success) addLog('info', T('sniffStarted'));
+    if (result.success) {
+        addLog('success', T('sniffStarted'));
+    } else {
+        addLog('error', 'Failed to start capture: ' + (result.error || 'Unknown error'));
+    }
 }
 
 async function stopSniff() {
