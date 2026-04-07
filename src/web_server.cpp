@@ -6,6 +6,7 @@
 #include "web_server.h"
 #include "web_assets.h"
 #include "wifi_sniffer.h"
+#include <SPIFFS.h>
 #include "handshake.h"
 #include "dictionary.h"
 #include "deauth.h"
@@ -248,18 +249,30 @@ void WebServerManager::setupRoutes() {
     });
 #endif
 
-    // 根路由 -> index.html
+    // 根路由 -> index.html (优先从 SPIFFS 读取，否则使用内置)
     server->on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
-        request->send(200, "text/html", INDEX_HTML);
+        if (SPIFFS.exists("/index.html")) {
+            request->send(SPIFFS, "/index.html", "text/html");
+        } else {
+            request->send(200, "text/html", INDEX_HTML);
+        }
     });
 
-    // 静态文件
+    // 静态文件 (优先从 SPIFFS 读取)
     server->on("/style.css", HTTP_GET, [](AsyncWebServerRequest* request) {
-        request->send(200, "text/css", STYLE_CSS);
+        if (SPIFFS.exists("/style.css")) {
+            request->send(SPIFFS, "/style.css", "text/css");
+        } else {
+            request->send(200, "text/css", STYLE_CSS);
+        }
     });
     
     server->on("/app.js", HTTP_GET, [](AsyncWebServerRequest* request) {
-        request->send(200, "application/javascript", APP_JS);
+        if (SPIFFS.exists("/app.js")) {
+            request->send(SPIFFS, "/app.js", "application/javascript");
+        } else {
+            request->send(200, "application/javascript", APP_JS);
+        }
     });
 
     // 404

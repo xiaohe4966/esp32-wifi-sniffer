@@ -199,26 +199,28 @@ function applyLanguage() {
     document.querySelector('[data-tab="logs"]').textContent = T('logs');
 
     // Dashboard card 1
-    document.querySelector('#dashboard .card:nth-child(1) h3').textContent = '📊 ' + T('statistics');
-    document.querySelector('#dashboard .card:nth-child(1) .stat-row:nth-child(1) .stat-label').textContent = T('totalPackets') + ':';
-    document.querySelector('#dashboard .card:nth-child(1) .stat-row:nth-child(2) .stat-label').textContent = T('networksFound') + ':';
-    document.querySelector('#dashboard .card:nth-child(1) .stat-row:nth-child(3) .stat-label').textContent = T('currentChannel') + ':';
-    document.querySelector('#dashboard .card:nth-child(1) .stat-row:nth-child(4) .stat-label').textContent = T('rssi') + ':';
+    document.querySelector('#dashboard .card-grid .card:nth-child(1) h3').textContent = '📊 ' + T('statistics');
+    document.querySelector('#dashboard .card-grid .card:nth-child(1) .stat-row:nth-child(1) .stat-label').textContent = T('totalPackets') + ':';
+    document.querySelector('#dashboard .card-grid .card:nth-child(1) .stat-row:nth-child(2) .stat-label').textContent = T('networksFound') + ':';
+    document.querySelector('#dashboard .card-grid .card:nth-child(1) .stat-row:nth-child(3) .stat-label').textContent = T('currentChannel') + ':';
+    document.querySelector('#dashboard .card-grid .card:nth-child(1) .stat-row:nth-child(4) .stat-label').textContent = T('rssi') + ':';
 
     // Dashboard card 2
-    document.querySelector('#dashboard .card:nth-child(2) h3').textContent = '📡 ' + T('wifiInfo');
-    document.querySelector('#dashboard .card:nth-child(2) .stat-row:nth-child(1) .stat-label').textContent = T('apIp') + ':';
-    document.querySelector('#dashboard .card:nth-child(2) .stat-row:nth-child(2) .stat-label').textContent = T('connectedClients') + ':';
-    document.querySelector('#dashboard .card:nth-child(2) .stat-row:nth-child(3) .stat-label').textContent = T('uptime') + ':';
+    document.querySelector('#dashboard .card-grid .card:nth-child(2) h3').textContent = '📡 ' + T('wifiInfo');
+    document.querySelector('#dashboard .card-grid .card:nth-child(2) .stat-row:nth-child(1) .stat-label').textContent = T('apIp') + ':';
+    document.querySelector('#dashboard .card-grid .card:nth-child(2) .stat-row:nth-child(2) .stat-label').textContent = T('connectedClients') + ':';
+    document.querySelector('#dashboard .card-grid .card:nth-child(2) .stat-row:nth-child(3) .stat-label').textContent = T('uptime') + ':';
 
     // Dashboard card 3
-    document.querySelector('#dashboard .card:nth-child(3) h3').textContent = '🎯 ' + T('quickActions');
+    document.querySelector('#dashboard .card-grid .card:nth-child(3) h3').textContent = '🎯 ' + T('quickActions');
     document.getElementById('btn-scan').textContent = state.lang === 'en' ? 'Start Scan' : '开始扫描';
     document.getElementById('btn-sniff').textContent = state.lang === 'en' ? 'Start Sniff' : '开始抓包';
     document.getElementById('btn-reset').textContent = state.lang === 'en' ? 'Reset' : '重置';
 
-    // Dashboard card 4
-    document.querySelector('#dashboard .card:nth-child(4) h3').textContent = '📈 ' + T('packetRate');
+    // Dashboard card 4 (outside card-grid)
+    // document.querySelector('#dashboard > .card:last-child h3').textContent = '📈 ' + T('packetRate');
+    const packetRateTitle = document.querySelector('#dashboard > .card:last-child h3');
+    if (packetRateTitle) packetRateTitle.textContent = '📈 ' + T('packetRate');
 
     // Networks tab
     document.getElementById('btn-refresh-networks').textContent = '🔄 ' + T('refresh');
@@ -233,18 +235,18 @@ function applyLanguage() {
     ths[6].textContent = T('actions');
 
     // Capture tab labels
-    document.querySelector('#capture .card:nth-child(1) h3').textContent = '📦 ' + T('captureControl');
-    document.querySelector('#capture .card:nth-child(1) label').textContent = T('channel') + ':';
-    const captureLabels = document.querySelectorAll('#capture .card:nth-child(1) label');
-    captureLabels[1].textContent = T('targetBssid') + ':';
+    document.querySelector('#capture .card-grid .card:nth-child(1) h3').textContent = '📦 ' + T('captureControl');
+    const captureLabels = document.querySelectorAll('#capture .card-grid .card:nth-child(1) label');
+    if (captureLabels[0]) captureLabels[0].textContent = T('channel') + ':';
+    if (captureLabels[1]) captureLabels[1].textContent = T('targetBssid') + ':';
     document.getElementById('btn-capture-start').textContent = '▶️ ' + (state.lang === 'en' ? 'Start' : '开始');
     document.getElementById('btn-capture-stop').textContent = '⏹️ ' + T('stop');
 
-    document.querySelector('#capture .card:nth-child(2) h3').textContent = '🤝 ' + T('handshakeCapture');
+    document.querySelector('#capture .card-grid .card:nth-child(2) h3').textContent = '🤝 ' + T('handshakeCapture');
     document.getElementById('handshake-text').textContent = T('noHandshake');
     document.getElementById('btn-download-handshake').textContent = '⬇️ ' + T('download');
 
-    document.querySelector('#capture .card:nth-child(3) h3').textContent = '💾 ' + T('files');
+    document.querySelector('#capture > .card h3').textContent = '💾 ' + T('files');
 
     // Update all select option text
     const allHopOption = document.querySelector('#capture-channel option');
@@ -254,22 +256,22 @@ function applyLanguage() {
     const warningBox = document.querySelector('#attack .warning-box');
     if (warningBox) warningBox.innerHTML = '⚠️ <strong>' + T('warningLabel') + '</strong>';
 
-    document.querySelector('#attack .card:nth-child(2) h3').textContent = '💥 ' + T('deauthAttack');
-    const deauthLabels = document.querySelectorAll('#attack .card:nth-child(2) label');
-    deauthLabels[0].textContent = T('targetBssid') + ':';
-    deauthLabels[1].textContent = T('targetStation');
-    deauthLabels[2].textContent = T('reasonCode') + ':';
+    document.querySelector('#attack .card-grid .card:nth-child(1) h3').textContent = '💥 ' + T('deauthAttack');
+    const deauthLabels = document.querySelectorAll('#attack .card-grid .card:nth-child(1) label');
+    if (deauthLabels[0]) deauthLabels[0].textContent = T('targetBssid') + ':';
+    if (deauthLabels[1]) deauthLabels[1].textContent = T('targetStation') + ':';
+    if (deauthLabels[2]) deauthLabels[2].textContent = T('reasonCode') + ':';
     document.getElementById('btn-deauth-start').textContent = T('startDeauth');
     document.getElementById('btn-deauth-stop').textContent = T('stop');
 
-    document.querySelector('#attack .card:nth-child(3) h3').textContent = '🔓 ' + T('dictionaryAttack');
-    const dictLabels = document.querySelectorAll('#attack .card:nth-child(3) label');
-    dictLabels[0].textContent = T('handshakeFile') + ':';
-    dictLabels[1].textContent = T('dictionary') + ':';
+    document.querySelector('#attack .card-grid .card:nth-child(2) h3').textContent = '🔓 ' + T('dictionaryAttack');
+    const dictLabels = document.querySelectorAll('#attack .card-grid .card:nth-child(2) label');
+    if (dictLabels[0]) dictLabels[0].textContent = T('handshakeFile') + ':';
+    if (dictLabels[1]) dictLabels[1].textContent = T('dictionary') + ':';
     const selectOptions = document.querySelectorAll('#dict-handshake option');
-    selectOptions[0].textContent = T('selectHandshake');
+    if (selectOptions[0]) selectOptions[0].textContent = T('selectHandshake');
     const dictOptions = document.querySelectorAll('#dict-file option');
-    dictOptions[0].textContent = T('selectDictionary');
+    if (dictOptions[0]) dictOptions[0].textContent = T('selectDictionary');
     document.getElementById('btn-dict-start').textContent = T('startAttack');
     document.getElementById('btn-dict-stop').textContent = T('stop');
 

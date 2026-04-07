@@ -15,6 +15,7 @@
 #include "sd_manager.h"
 #include "oled_display.h"
 #include "cli.h"
+#include <SPIFFS.h>
 
 // ==================== 全局变量定义 ====================
 DeviceMode currentMode = MODE_IDLE;
@@ -82,7 +83,14 @@ void setupHardware() {
     // 初始化 LED
     pinMode(LED_PIN, OUTPUT);
     digitalWrite(LED_PIN, LOW);
-    
+
+    // 初始化 SPIFFS
+    if (SPIFFS.begin(true)) {
+        LOG_INFO("SPIFFS initialized");
+    } else {
+        LOG_WARN("SPIFFS initialization failed");
+    }
+
     // 初始化 OLED
 #if ENABLE_OLED
     if (Display.begin()) {

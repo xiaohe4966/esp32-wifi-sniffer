@@ -173,6 +173,7 @@ void WiFiSniffer::setNetworkCallback(NetworkFoundCallback callback) {
 
 void WiFiSniffer::setNetworkFoundCallback(NetworkFoundCallback callback) {
     networkCallback = callback;
+    networkFoundCallback = callback;  // 同时设置，兼容两种触发方式
 }
 
 // ==================== 网络扫描 ====================
