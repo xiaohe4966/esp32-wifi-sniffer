@@ -47,6 +47,9 @@ public:
     bool begin();
     void end();
     bool isRunning() const { return running; }
+    
+    // 主循环调用
+    void update();  // 检查扫描超时等
 
     // 服务器控制
     void startServer();
@@ -74,6 +77,10 @@ private:
     // 客户端管理
     uint32_t lastBroadcast;
     static const uint32_t BROADCAST_INTERVAL = 100; // ms
+    
+    // 扫描控制
+    uint32_t scanStartTime;
+    static const uint32_t SCAN_DURATION = 10000; // 10秒扫描时长
 
     // 路由设置
     void setupRoutes();

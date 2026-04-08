@@ -25,7 +25,7 @@
 #define OLED_HEIGHT 64
 
 // SD 卡模块 (可选)
-#define ENABLE_SD_CARD false
+#define ENABLE_SD_CARD true
 #define SD_CS 10
 #define SD_MOSI 11
 #define SD_MISO 13

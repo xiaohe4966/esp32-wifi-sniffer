@@ -68,6 +68,9 @@ void loop() {
     // 根据当前模式处理
     handleMode();
     
+    // 更新 Web 服务器状态
+    WebServer.update();
+    
     // 更新显示
     if (Display.isReady()) {
         Display.update();

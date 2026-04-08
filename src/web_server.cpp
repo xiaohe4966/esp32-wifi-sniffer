@@ -41,6 +41,11 @@ bool WebServerManager::begin() {
     setupWebSocket();
     setupStaticFiles();
     
+    // 注册网络发现回调，实时推送扫描结果到前端
+    Sniffer.setNetworkCallback([](const WiFiNetwork* network) {
+        WebServer.broadcastScanResult(network);
+    });
+    
     server->begin();
     running = true;
     
@@ -62,6 +67,27 @@ void WebServerManager::end() {
     }
     
     running = false;
+}
+
+// ==================== 主循环更新 ====================
+void WebServerManager::update() {
+    // 检查扫描超时
+    if (Sniffer.isScanning() && scanStartTime > 0) {
+        if (millis() - scanStartTime > SCAN_DURATION) {
+            Sniffer.stopScan();
+            scanStartTime = 0;
+            
+            // 广播扫描完成
+            StaticJsonDocument<128> doc;
+            doc["type"] = "scan_complete";
+            doc["count"] = Sniffer.getNetworkCount();
+            char buffer[128];
+            serializeJson(doc, buffer);
+            if (ws) ws->textAll(buffer);
+            
+            LOG_INFO("Scan completed, found %d networks", Sniffer.getNetworkCount());
+        }
+    }
 }
 
 // ==================== 服务器控制 ====================
@@ -289,6 +315,7 @@ void WebServerManager::handleStatus(AsyncWebServerRequest* request) {
 }
 
 void WebServerManager::handleScan(AsyncWebServerRequest* request) {
+    scanStartTime = millis();  // 记录扫描开始时间
     Sniffer.startScan();
     sendSuccess(request, "Scan started");
 }

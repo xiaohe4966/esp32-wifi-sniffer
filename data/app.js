@@ -198,53 +198,67 @@ function applyLanguage() {
     document.querySelector('[data-tab="attack"]').textContent = T('attack');
     document.querySelector('[data-tab="logs"]').textContent = T('logs');
 
-    // Dashboard card 1
-    document.querySelector('#dashboard .card:nth-child(1) h3').textContent = '📊 ' + T('statistics');
-    document.querySelector('#dashboard .card:nth-child(1) .stat-row:nth-child(1) .stat-label').textContent = T('totalPackets') + ':';
-    document.querySelector('#dashboard .card:nth-child(1) .stat-row:nth-child(2) .stat-label').textContent = T('networksFound') + ':';
-    document.querySelector('#dashboard .card:nth-child(1) .stat-row:nth-child(3) .stat-label').textContent = T('currentChannel') + ':';
-    document.querySelector('#dashboard .card:nth-child(1) .stat-row:nth-child(4) .stat-label').textContent = T('rssi') + ':';
+    // Dashboard cards in card-grid
+    const dashboardCards = document.querySelectorAll('#dashboard .card-grid .card');
+    if (dashboardCards[0]) {
+        dashboardCards[0].querySelector('h3').textContent = '📊 ' + T('statistics');
+        const labels = dashboardCards[0].querySelectorAll('.stat-label');
+        if (labels[0]) labels[0].textContent = T('totalPackets') + ':';
+        if (labels[1]) labels[1].textContent = T('networksFound') + ':';
+        if (labels[2]) labels[2].textContent = T('currentChannel') + ':';
+        if (labels[3]) labels[3].textContent = T('rssi') + ':';
+    }
+    if (dashboardCards[1]) {
+        dashboardCards[1].querySelector('h3').textContent = '📡 ' + T('wifiInfo');
+        const labels = dashboardCards[1].querySelectorAll('.stat-label');
+        if (labels[0]) labels[0].textContent = T('apIp') + ':';
+        if (labels[1]) labels[1].textContent = T('connectedClients') + ':';
+        if (labels[2]) labels[2].textContent = T('uptime') + ':';
+    }
+    if (dashboardCards[2]) {
+        dashboardCards[2].querySelector('h3').textContent = '🎯 ' + T('quickActions');
+    }
 
-    // Dashboard card 2
-    document.querySelector('#dashboard .card:nth-child(2) h3').textContent = '📡 ' + T('wifiInfo');
-    document.querySelector('#dashboard .card:nth-child(2) .stat-row:nth-child(1) .stat-label').textContent = T('apIp') + ':';
-    document.querySelector('#dashboard .card:nth-child(2) .stat-row:nth-child(2) .stat-label').textContent = T('connectedClients') + ':';
-    document.querySelector('#dashboard .card:nth-child(2) .stat-row:nth-child(3) .stat-label').textContent = T('uptime') + ':';
-
-    // Dashboard card 3
-    document.querySelector('#dashboard .card:nth-child(3) h3').textContent = '🎯 ' + T('quickActions');
+    // Buttons
     document.getElementById('btn-scan').textContent = state.lang === 'en' ? 'Start Scan' : '开始扫描';
     document.getElementById('btn-sniff').textContent = state.lang === 'en' ? 'Start Sniff' : '开始抓包';
     document.getElementById('btn-reset').textContent = state.lang === 'en' ? 'Reset' : '重置';
 
-    // Dashboard card 4
-    document.querySelector('#dashboard .card:nth-child(4) h3').textContent = '📈 ' + T('packetRate');
+    // Dashboard card 4 (outside card-grid)
+    const packetRateCard = document.querySelector('#dashboard > .card h3');
+    if (packetRateCard) packetRateCard.textContent = '📈 ' + T('packetRate');
 
     // Networks tab
     document.getElementById('btn-refresh-networks').textContent = '🔄 ' + T('refresh');
     document.getElementById('network-filter').placeholder = T('filterNetworks');
     const ths = document.querySelectorAll('#networks-table th');
-    ths[0].textContent = T('ssid');
-    ths[1].textContent = T('bssid');
-    ths[2].textContent = T('channel');
-    ths[3].textContent = T('rssi');
-    ths[4].textContent = T('security');
-    ths[5].textContent = T('packets');
-    ths[6].textContent = T('actions');
+    if (ths[0]) ths[0].textContent = T('ssid');
+    if (ths[1]) ths[1].textContent = T('bssid');
+    if (ths[2]) ths[2].textContent = T('channel');
+    if (ths[3]) ths[3].textContent = T('rssi');
+    if (ths[4]) ths[4].textContent = T('security');
+    if (ths[5]) ths[5].textContent = T('packets');
+    if (ths[6]) ths[6].textContent = T('actions');
 
-    // Capture tab labels
-    document.querySelector('#capture .card:nth-child(1) h3').textContent = '📦 ' + T('captureControl');
-    document.querySelector('#capture .card:nth-child(1) label').textContent = T('channel') + ':';
-    const captureLabels = document.querySelectorAll('#capture .card:nth-child(1) label');
-    captureLabels[1].textContent = T('targetBssid') + ':';
+    // Capture tab
+    const captureCards = document.querySelectorAll('#capture .card-grid .card');
+    if (captureCards[0]) {
+        captureCards[0].querySelector('h3').textContent = '📦 ' + T('captureControl');
+        const captureLabels = captureCards[0].querySelectorAll('label');
+        if (captureLabels[0]) captureLabels[0].textContent = T('channel') + ':';
+        if (captureLabels[1]) captureLabels[1].textContent = T('targetBssid') + ':';
+    }
     document.getElementById('btn-capture-start').textContent = '▶️ ' + (state.lang === 'en' ? 'Start' : '开始');
     document.getElementById('btn-capture-stop').textContent = '⏹️ ' + T('stop');
 
-    document.querySelector('#capture .card:nth-child(2) h3').textContent = '🤝 ' + T('handshakeCapture');
+    if (captureCards[1]) {
+        captureCards[1].querySelector('h3').textContent = '🤝 ' + T('handshakeCapture');
+    }
     document.getElementById('handshake-text').textContent = T('noHandshake');
     document.getElementById('btn-download-handshake').textContent = '⬇️ ' + T('download');
 
-    document.querySelector('#capture .card:nth-child(3) h3').textContent = '💾 ' + T('files');
+    const filesCard = document.querySelector('#capture > .card h3');
+    if (filesCard) filesCard.textContent = '💾 ' + T('files');
 
     // Update all select option text
     const allHopOption = document.querySelector('#capture-channel option');
@@ -254,22 +268,27 @@ function applyLanguage() {
     const warningBox = document.querySelector('#attack .warning-box');
     if (warningBox) warningBox.innerHTML = '⚠️ <strong>' + T('warningLabel') + '</strong>';
 
-    document.querySelector('#attack .card:nth-child(2) h3').textContent = '💥 ' + T('deauthAttack');
-    const deauthLabels = document.querySelectorAll('#attack .card:nth-child(2) label');
-    deauthLabels[0].textContent = T('targetBssid') + ':';
-    deauthLabels[1].textContent = T('targetStation');
-    deauthLabels[2].textContent = T('reasonCode') + ':';
+    const attackCards = document.querySelectorAll('#attack .card-grid .card');
+    if (attackCards[0]) {
+        attackCards[0].querySelector('h3').textContent = '💥 ' + T('deauthAttack');
+        const deauthLabels = attackCards[0].querySelectorAll('label');
+        if (deauthLabels[0]) deauthLabels[0].textContent = T('targetBssid') + ':';
+        if (deauthLabels[1]) deauthLabels[1].textContent = T('targetStation');
+        if (deauthLabels[2]) deauthLabels[2].textContent = T('reasonCode') + ':';
+    }
     document.getElementById('btn-deauth-start').textContent = T('startDeauth');
     document.getElementById('btn-deauth-stop').textContent = T('stop');
 
-    document.querySelector('#attack .card:nth-child(3) h3').textContent = '🔓 ' + T('dictionaryAttack');
-    const dictLabels = document.querySelectorAll('#attack .card:nth-child(3) label');
-    dictLabels[0].textContent = T('handshakeFile') + ':';
-    dictLabels[1].textContent = T('dictionary') + ':';
+    if (attackCards[1]) {
+        attackCards[1].querySelector('h3').textContent = '🔓 ' + T('dictionaryAttack');
+        const dictLabels = attackCards[1].querySelectorAll('label');
+        if (dictLabels[0]) dictLabels[0].textContent = T('handshakeFile') + ':';
+        if (dictLabels[1]) dictLabels[1].textContent = T('dictionary') + ':';
+    }
     const selectOptions = document.querySelectorAll('#dict-handshake option');
-    selectOptions[0].textContent = T('selectHandshake');
+    if (selectOptions[0]) selectOptions[0].textContent = T('selectHandshake');
     const dictOptions = document.querySelectorAll('#dict-file option');
-    dictOptions[0].textContent = T('selectDictionary');
+    if (dictOptions[0]) dictOptions[0].textContent = T('selectDictionary');
     document.getElementById('btn-dict-start').textContent = T('startAttack');
     document.getElementById('btn-dict-stop').textContent = T('stop');
 
@@ -277,15 +296,16 @@ function applyLanguage() {
     document.getElementById('btn-clear-logs').textContent = T('clear');
     document.getElementById('btn-export-logs').textContent = T('export');
     const logOptions = document.querySelectorAll('#log-level option');
-    logOptions[0].textContent = T('allLevels');
+    if (logOptions[0]) logOptions[0].textContent = T('allLevels');
 
     // Footer
-    document.querySelector('footer p').textContent = 'ESP32 WiFi Sniffer v1.0.0 | ' + T('securityResearch');
+    const footerP = document.querySelector('footer p');
+    if (footerP) footerP.textContent = 'ESP32 WiFi Sniffer v1.0.0 | ' + T('securityResearch');
 }
 
 // ==================== WebSocket 连接 ====================
 function connectWebSocket() {
-    const wsUrl = `ws://${window.location.hostname}:81/ws`;
+    const wsUrl = `ws://${window.location.hostname}/ws`;
     
     state.ws = new WebSocket(wsUrl);
     
