@@ -10,6 +10,10 @@
 #include "dictionary.h"
 #include "deauth.h"
 #include "sd_manager.h"
+#include "config.h"
+
+// ==================== 外部变量 ====================
+extern DeviceMode currentMode;
 
 // ==================== 静态成员定义 ====================
 WebServerManager* WebServerManager::instance = nullptr;
@@ -338,15 +342,35 @@ void WebServerManager::handleNetworks(AsyncWebServerRequest* request) {
 
 void WebServerManager::handleCaptureStart(AsyncWebServerRequest* request) {
     // 获取参数
-    const char* channel = request->getParam("channel") ? 
-                          request->getParam("channel")->value().c_str() : nullptr;
+    const char* channelStr = request->getParam("channel") ? 
+                              request->getParam("channel")->value().c_str() : nullptr;
+    const char* bssid = request->getParam("bssid") ? 
+                        request->getParam("bssid")->value().c_str() : nullptr;
     
-    if (channel) {
-        Sniffer.setChannel(atoi(channel));
+    // 只有当 channel >= 1 时才设置信道，channel=0 表示信道跳变
+    int channel = channelStr ? atoi(channelStr) : 0;
+    if (channel >= 1 && channel <= 14) {
+        Sniffer.setChannel(channel);
     }
     
+    // 设置握手捕获模式
+    currentMode = MODE_HANDSHAKE_CAPTURE;
     Sniffer.startSniffing();
-    sendSuccess(request, "Capture started");
+    
+    // 如果 channel=0，启动信道跳变
+    if (channel == 0) {
+        Sniffer.startChannelHopping();
+    }
+    
+    // 如果指定了 BSSID，设置握手捕获目标
+    if (bssid) {
+        uint8_t bssidBytes[6];
+        if (parseMAC(bssid, bssidBytes)) {
+            Handshake.setTargetBSSID(bssidBytes);
+        }
+    }
+    
+    sendSuccess(request, "Handshake capture started");
 }
 
 void WebServerManager::handleCaptureStop(AsyncWebServerRequest* request) {

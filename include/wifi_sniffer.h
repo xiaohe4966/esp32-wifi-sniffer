@@ -115,6 +115,7 @@ private:
     void updateNetworkList(const PacketInfo* info, const uint8_t* packet, uint16_t len);
     int findOrCreateNetwork(const uint8_t* bssid);
     void extractSSID(const uint8_t* packet, uint16_t len, char* ssid, size_t maxLen);
+    uint8_t extractChannel(const uint8_t* packet, uint16_t len);
     WiFiAuthMode detectAuthMode(const uint8_t* packet, uint16_t len);
 
     // 静态实例指针 (用于回调)

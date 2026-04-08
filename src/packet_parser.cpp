@@ -174,46 +174,108 @@ bool PacketParser::parseDeauthentication(const uint8_t* packet, uint16_t len,
 
 // ==================== EAPOL 解析 ====================
 bool PacketParser::isEAPOL(const uint8_t* packet, uint16_t len) {
-    if (len < 28) return false;
+    // 检查最小长度 (MAC header 24 + LLC/SNAP 8 + EAPOL 4)
+    if (len < 36) return false;
+    
+    // 获取 Frame Control 字节
+    uint16_t fc = packet[0] | (packet[1] << 8);
+    uint8_t frameType = (fc >> 2) & 0x03;
+    bool toDS = fc & 0x01;
+    bool fromDS = fc & 0x02;
+    bool protectedFrame = (fc >> 6) & 0x01;
+    
+    // 计算 MAC header 长度
+    uint8_t macHeaderLen = 24;
+    
+    // 检查 QoS 字段 (bit 7 of byte 0 in LLC)
+    if (frameType == FRAME_TYPE_DATA) {
+        macHeaderLen = 26;  // 有 QoS Control 字段
+    }
+    
+    // 计算 LLC/SNAP 偏移
+    uint16_t llcOffset = macHeaderLen;
+    
+    // 调试日志：打印帧类型和偏移
+    static uint32_t dbgCount = 0;
+    if (dbgCount < 5 && frameType == FRAME_TYPE_DATA) {
+        LOG_INFO("DEBUG DATA: FC=0x%04X toDS=%d fromDS=%d proto=%d llcOff=%d len=%d",
+                 fc, toDS, fromDS, protectedFrame, llcOffset, len);
+        dbgCount++;
+    }
     
     // 检查 LLC/SNAP 头部
     // DSAP = 0xAA, SSAP = 0xAA, Control = 0x03
-    if (packet[24] != 0xAA || packet[25] != 0xAA || packet[26] != 0x03) {
+    if (packet[llcOffset] != 0xAA || packet[llcOffset + 1] != 0xAA || packet[llcOffset + 2] != 0x03) {
         return false;
     }
     
-    // OUI = 00:00:00
-    if (packet[27] != 0x00 || packet[28] != 0x00 || packet[29] != 0x00) {
+    // OUI = 00:00:00 (Microsoft/Nortel)
+    if (packet[llcOffset + 3] != 0x00 || packet[llcOffset + 4] != 0x00 || 
+        packet[llcOffset + 5] != 0x00) {
         return false;
     }
     
     // Type = 0x888E (EAPOL)
-    uint16_t type = packet[30] | (packet[31] << 8);
-    return type == 0x888E;
+    uint16_t type = packet[llcOffset + 6] | (packet[llcOffset + 7] << 8);
+    
+    if (type == 0x888E) {
+        LOG_INFO("DEBUG: EAPOL found! offset=%d", llcOffset);
+        return true;
+    }
+    
+    return false;
 }
 
 bool PacketParser::parseEAPOL(const uint8_t* packet, uint16_t len, 
                                EAPOLKeyHeader* keyInfo) {
-    if (!isEAPOL(packet, len)) return false;
+    memset(keyInfo, 0, sizeof(EAPOLKeyHeader));
     
-    // LLC/SNAP 头部 = 8 字节
-    uint16_t eapolOffset = 32;
-    if (len < eapolOffset + 4) return false;
+    // 计算 MAC header 长度
+    uint16_t fc = packet[0] | (packet[1] << 8);
+    uint8_t frameType = (fc >> 2) & 0x03;
     
-    // 检查 EAPOL 版本和类型
-    if (packet[eapolOffset] != EAPOL_VERSION) return false;
-    if (packet[eapolOffset + 1] != EAPOL_KEY_TYPE) return false;
+    uint8_t macHeaderLen = 24;
+    if (frameType == FRAME_TYPE_DATA) {
+        macHeaderLen = 26;  // 有 QoS Control
+    }
     
-    // 解析 Key 信息
-    if (len < eapolOffset + sizeof(EAPOLKeyHeader)) return false;
+    uint16_t llcOffset = macHeaderLen;
+    uint16_t eapolOffset = llcOffset + 8;  // LLC/SNAP = 8 bytes
     
-    uint8_t* key = (uint8_t*)keyInfo;
-    memcpy(key, packet + eapolOffset + 4, sizeof(EAPOLKeyHeader));
+    // 验证最小长度 (EAPOL Key Header = 95 bytes)
+    if (len < eapolOffset + 95) return false;
     
-    // 字节序转换
-    keyInfo->keyInfo = (packet[eapolOffset + 5] << 8) | packet[eapolOffset + 4];
-    keyInfo->keyLength = (packet[eapolOffset + 7] << 8) | packet[eapolOffset + 6];
-    keyInfo->keyDataLength = (packet[eapolOffset + 97] << 8) | packet[eapolOffset + 96];
+    // 重新检查 LLC/SNAP + EtherType
+    if (packet[llcOffset] != 0xAA || packet[llcOffset + 1] != 0xAA || 
+        packet[llcOffset + 2] != 0x03) {
+        return false;
+    }
+    uint16_t etherType = packet[llcOffset + 6] | (packet[llcOffset + 7] << 8);
+    if (etherType != 0x888E) return false;
+    
+    // 解析 EAPOL-Key 字段 (按 EAPOLKeyHeader 结构)
+    // keyInfo: type(1) + keyInfo(2) + keyLength(2) + replayCounter(8) = 13 bytes
+    keyInfo->type = packet[eapolOffset];
+    keyInfo->keyInfo = packet[eapolOffset + 1] | (packet[eapolOffset + 2] << 8);
+    keyInfo->keyLength = packet[eapolOffset + 3] | (packet[eapolOffset + 4] << 8);
+    memcpy(keyInfo->replayCounter, packet + eapolOffset + 5, 8);
+    
+    // nonce(32) from offset 13
+    memcpy(keyInfo->nonce, packet + eapolOffset + 13, 32);
+    
+    // iv(16) from offset 45
+    memcpy(keyInfo->iv, packet + eapolOffset + 45, 16);
+    
+    // rsc(8) from offset 61
+    memcpy(keyInfo->rsc, packet + eapolOffset + 61, 8);
+    
+    // mic(16) from offset 77
+    memcpy(keyInfo->mic, packet + eapolOffset + 77, 16);
+    
+    // keyDataLength(2) from offset 93
+    keyInfo->keyDataLength = packet[eapolOffset + 93] | (packet[eapolOffset + 94] << 8);
+    
+    LOG_INFO("DEBUG: EAPOL parsed! type=%d keyInfo=0x%04X", keyInfo->type, keyInfo->keyInfo);
     
     return true;
 }

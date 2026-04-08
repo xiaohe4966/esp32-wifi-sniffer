@@ -76,10 +76,24 @@ void HandshakeCapture::getTargetStation(uint8_t* station) const {
 // ==================== 数据包处理 ====================
 void HandshakeCapture::processPacket(const uint8_t* packet, uint16_t len, 
                                       const PacketInfo* info) {
+    // 调试：打印包类型
+    static uint32_t dbgDataPkts = 0;
+    if (dbgDataPkts < 3) {
+        uint16_t fc = packet[0] | (packet[1] << 8);
+        bool toDS = fc & 0x01;
+        bool fromDS = fc & 0x02;
+        LOG_INFO("DEBUG HAND: DATA pkt FC=0x%04X toDS=%d fromDS=%d len=%d",
+                 fc, toDS, fromDS, len);
+        dbgDataPkts++;
+    }
+    
     // 检查是否是 EAPOL 帧
-    if (!Parser.isEAPOL(packet, len)) return;
+    if (!Parser.isEAPOL(packet, len)) {
+        return;
+    }
     
     totalEAPOL++;
+    LOG_INFO("DEBUG HAND: EAPOL detected! totalEAPOL=%lu", totalEAPOL);
     processEAPOL(packet, len, info);
 }
 

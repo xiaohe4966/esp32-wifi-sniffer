@@ -269,6 +269,13 @@ void IRAM_ATTR WiFiSniffer::wifiSnifferCallback(void* buf, wifi_promiscuous_pkt_
     
     instance->lastRSSI = rssi;
     
+    // 调试：记录前几个包的 channel（只在 scanning 时）
+    static uint32_t dbgCount = 0;
+    if (instance->scanning && dbgCount < 3) {
+        LOG_INFO("DEBUG: pkt channel=%d, sig_len=%d", channel, pkt->rx_ctrl.sig_len);
+        dbgCount++;
+    }
+    
     // 处理数据包
     instance->processPacket(pkt->payload, pkt->rx_ctrl.sig_len, rssi, channel);
 }
@@ -356,9 +363,19 @@ void WiFiSniffer::updateNetworkList(const PacketInfo* info, const uint8_t* packe
     
     // 更新信息
     net->rssi = info->rssi;
-    net->channel = info->channel;
+    // 优先从 beacon 帧的 DS Parameter Set 解析信道，其次使用 rx_ctrl.channel
+    uint8_t parsedChannel = extractChannel(packet, len);
+    net->channel = parsedChannel ? parsedChannel : info->channel;
     net->lastSeen = millis();
     net->packetCount++;
+    
+    // 调试：每新发现一个网络打印 channel
+    static uint32_t dbgNetCount = 0;
+    if (dbgNetCount < 5) {
+        LOG_INFO("DEBUG: new network %s CH=%d RSSI=%d", 
+                 net->ssid[0] ? net->ssid : "(hidden)", net->channel, net->rssi);
+        dbgNetCount++;
+    }
     
     // 提取 SSID
     if (net->ssid[0] == '\0') {
@@ -406,7 +423,7 @@ void WiFiSniffer::extractSSID(const uint8_t* packet, uint16_t len, char* ssid, s
         uint8_t id = packet[offset];
         uint8_t ieLen = packet[offset + 1];
         
-        if (id == IE_SSID && ieLen > 0 && ieLen <= 32) {
+        if (id == 0 && ieLen > 0 && ieLen <= 32) {  // IE_SSID = 0
             size_t copyLen = min((size_t)ieLen, maxLen - 1);
             memcpy(ssid, packet + offset + 2, copyLen);
             ssid[copyLen] = '\0';
@@ -415,6 +432,29 @@ void WiFiSniffer::extractSSID(const uint8_t* packet, uint16_t len, char* ssid, s
         
         offset += 2 + ieLen;
     }
+}
+
+// 从 beacon 帧中解析信道 (通过 DS Parameter Set IE, ID=3)
+uint8_t WiFiSniffer::extractChannel(const uint8_t* packet, uint16_t len) {
+    uint16_t offset = 36;  // 跳过 MAC 头 + Beacon 固定参数
+    
+    while (offset + 2 < len) {
+        uint8_t id = packet[offset];
+        uint8_t ieLen = packet[offset + 1];
+        
+        if (id == 3) {  // DS Parameter Set
+            if (ieLen >= 1) {
+                return packet[offset + 2];  // 信道在 IE 数据第一个字节
+            }
+        }
+        
+        offset += 2 + ieLen;
+        
+        // 安全检查，防止越界
+        if (offset > len) break;
+    }
+    
+    return 0;  // 未找到 DS Parameter Set
 }
 
 WiFiAuthMode WiFiSniffer::detectAuthMode(const uint8_t* packet, uint16_t len) {
